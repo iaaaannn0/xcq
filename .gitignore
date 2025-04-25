@@ -1,0 +1,4 @@
+data/chat.db
+/target
+.DS_Store
+config.json
