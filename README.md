@@ -1,6 +1,10 @@
+
 # XCQ 即时通讯客户端
 
 XCQ 是一个基于 XMPP 协议的跨平台即时通讯客户端，灵感来源于经典的 ICQ 通讯软件。它提供了简洁的用户界面和丰富的即时通讯功能，支持多平台运行。
+
+<img src="https://github.com/user-attachments/assets/c810c8e9-7aac-4626-9ffa-284cb9c28925" width="150px">
+
 
 ## 功能特性
 
