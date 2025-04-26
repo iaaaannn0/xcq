@@ -270,59 +270,6 @@ public class ContactWindow extends JFrame {
                     });
                 }
             });
-
-            // 添加消息监听器
-            xmppClient.addMessageListener((from, message) -> {
-                SwingUtilities.invokeLater(() -> {
-                    String fromJid = from.toString();
-                    String myJid = xmppClient.getConnection().getUser().asBareJid().toString();
-                    String content = message;
-                    
-                    if (content != null) {
-                        // 保存消息到数据库
-                        ChatDatabase.getInstance().saveMessage(fromJid, myJid, content, false);
-                        
-                        // 查找是否有对应的聊天窗口
-                        ChatWindow existingWindow = null;
-                        for (ChatWindow window : chatWindowCache.values()) {
-                            if (window.getContactJid().equals(fromJid)) {
-                                existingWindow = window;
-                                break;
-                            }
-                        }
-                        
-                        if (existingWindow != null) {
-                            // 如果聊天窗口存在，显示消息
-                            existingWindow.appendMessage(fromJid, myJid, content, false);
-                            if (!existingWindow.isActive()) {
-                                existingWindow.startNotification();
-                            }
-                        } else {
-                            // 如果聊天窗口不存在，创建新窗口
-                            try {
-                                RosterEntry entry = roster.getEntry(JidCreate.bareFrom(fromJid));
-                                String displayName = entry != null ? entry.getName() : fromJid;
-                                ChatWindow newWindow = new ChatWindow(context, fromJid, displayName);
-                                chatWindowCache.put(fromJid, newWindow);
-                                newWindow.addWindowListener(new WindowAdapter() {
-                                    @Override
-                                    public void windowClosed(WindowEvent e) {
-                                        chatWindowCache.remove(fromJid);
-                                    }
-                                });
-                                newWindow.appendMessage(fromJid, myJid, content, false);
-                                newWindow.setVisible(true);
-                                newWindow.startNotification();
-                            } catch (Exception e) {
-                                logger.error("Failed to create chat window", e);
-                            }
-                        }
-                        
-                        // 开始联系人闪烁提醒
-                        startContactBlinking(fromJid);
-                    }
-                });
-            });
         }
     }
 

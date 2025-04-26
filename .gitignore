@@ -2,3 +2,5 @@ data/chat.db
 /target
 .DS_Store
 config.json
+data/chat.db-shm
+data/chat.db-wal

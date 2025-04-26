@@ -190,6 +190,25 @@ public class ContactTreeModel extends DefaultTreeModel {
         return blinkStates.containsKey(jid) && blinkStates.get(jid);
     }
 
+    public Contact findContact(String jid) {
+        // 遍历所有节点查找联系人
+        DefaultMutableTreeNode root = (DefaultMutableTreeNode) getRoot();
+        for (int i = 0; i < root.getChildCount(); i++) {
+            DefaultMutableTreeNode groupNode = (DefaultMutableTreeNode) root.getChildAt(i);
+            for (int j = 0; j < groupNode.getChildCount(); j++) {
+                DefaultMutableTreeNode contactNode = (DefaultMutableTreeNode) groupNode.getChildAt(j);
+                Object userObject = contactNode.getUserObject();
+                if (userObject instanceof Contact) {
+                    Contact contact = (Contact) userObject;
+                    if (contact.getJid().equals(jid)) {
+                        return contact;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
     public static class Contact {
         private final String jid;
         private final String name;

@@ -5,36 +5,52 @@ import org.jivesoftware.smack.packet.Presence;
 import org.jivesoftware.smack.roster.RosterEntry;
 import org.jivesoftware.smack.roster.RosterGroup;
 import org.jxmpp.jid.Jid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import java.awt.*;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class ContactTreeCellRenderer extends DefaultTreeCellRenderer {
-    private static final Color BLINK_COLOR = new Color(255, 0, 0);
+    private static final Logger logger = LoggerFactory.getLogger(ContactTreeCellRenderer.class);
+    private static final Color BLINK_COLOR = Color.RED;
     private final Map<Jid, Presence.Mode> presenceMap = new HashMap<>();
     private final Map<Jid, String> nicknameMap = new HashMap<>();
     private final Map<String, Color> jidColorMap = new HashMap<>();
     private final Map<String, Boolean> blinkingJids = new HashMap<>();
-    private final ContactTreeModel treeModel;
-    private Timer blinkTimer;
-    private boolean blinkState = false;
+    private final ContactTreeModel model;
+    private final Set<String> blinkingContacts;
+    private final Timer blinkTimer;
+    private boolean isBlinking = false;
+    private static final int BLINK_INTERVAL = 500; // 闪烁间隔（毫秒）
 
-    public ContactTreeCellRenderer(ContactTreeModel treeModel) {
-        this.treeModel = treeModel;
-        
-        // 创建闪烁定时器
-        blinkTimer = new Timer(500, e -> {
-            blinkState = !blinkState;
-            // 通知树重绘
-            if (treeModel != null && treeModel.getTree() != null) {
-                treeModel.getTree().repaint();
+    public ContactTreeCellRenderer(ContactTreeModel model) {
+        this.model = model;
+        this.blinkingContacts = new HashSet<>();
+        this.blinkTimer = new Timer(true);
+        startBlinkTimer();
+    }
+
+    private void startBlinkTimer() {
+        blinkTimer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                isBlinking = !isBlinking;
+                SwingUtilities.invokeLater(() -> {
+                    if (!blinkingContacts.isEmpty()) {
+                        model.reload();
+                    }
+                });
             }
-        });
-        blinkTimer.start();
+        }, 0, BLINK_INTERVAL);
     }
 
     @Override
@@ -84,7 +100,7 @@ public class ContactTreeCellRenderer extends DefaultTreeCellRenderer {
                 setText(statusIcon + " " + displayName);
                 
                 // 设置颜色
-                if (blinkingJids.getOrDefault(jidStr, false) && blinkState) {
+                if (blinkingContacts.contains(jidStr) && isBlinking) {
                     setForeground(BLINK_COLOR);
                 } else {
                     Color color = jidColorMap.getOrDefault(jidStr, Color.BLACK);
@@ -112,21 +128,24 @@ public class ContactTreeCellRenderer extends DefaultTreeCellRenderer {
     }
 
     public void startBlinking(String jid) {
-        blinkingJids.put(jid, true);
-        if (!blinkTimer.isRunning()) {
-            blinkTimer.start();
+        if (!blinkingContacts.contains(jid)) {
+            blinkingContacts.add(jid);
+            logger.debug("Started blinking for contact: {}", jid);
         }
     }
 
     public void stopBlinking(String jid) {
-        blinkingJids.remove(jid);
-        if (blinkingJids.isEmpty()) {
-            blinkTimer.stop();
+        if (blinkingContacts.remove(jid)) {
+            logger.debug("Stopped blinking for contact: {}", jid);
         }
     }
 
     public void stopAllBlinking() {
-        blinkingJids.clear();
-        blinkTimer.stop();
+        blinkingContacts.clear();
+        blinkTimer.cancel();
+    }
+
+    public void cleanup() {
+        blinkTimer.cancel();
     }
 } 

@@ -20,6 +20,7 @@ public class Configuration {
     private static Configuration instance;
     private Map<String, Object> settings;
     private Set<String> temporaryContacts;
+    private boolean autoOpenChat = false;  // 默认不自动打开聊天窗口
 
     private Configuration() {
         settings = new HashMap<>();
@@ -132,5 +133,13 @@ public class Configuration {
 
     public Set<String> getTemporaryContacts() {
         return new HashSet<>(temporaryContacts);
+    }
+
+    public boolean isAutoOpenChat() {
+        return autoOpenChat;
+    }
+
+    public void setAutoOpenChat(boolean autoOpenChat) {
+        this.autoOpenChat = autoOpenChat;
     }
 } 

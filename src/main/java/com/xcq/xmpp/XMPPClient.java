@@ -18,6 +18,8 @@ import org.slf4j.LoggerFactory;
 import org.jivesoftware.smack.packet.Presence;
 import org.jivesoftware.smack.packet.Stanza;
 import javax.swing.SwingUtilities;
+import com.xcq.db.ChatDatabase;
+import com.xcq.ui.MainWindow;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,13 +46,23 @@ public class XMPPClient {
             
             chatManager = ChatManager.getInstanceFor(connection);
             
-            // 设置消息监听器
+            // 设置全局消息监听器
             chatManager.addIncomingListener((from, message, chat) -> {
                 String messageBody = message.getBody();
                 if (messageBody != null) {
                     // 去除消息末尾的空格
                     messageBody = messageBody.replaceAll("\\s+$", "");
                     
+                    // 保存消息到数据库
+                    String fromJid = from.asBareJid().toString();
+                    String toJid = connection.getUser().asBareJid().toString();
+                    ChatDatabase db = ChatDatabase.getInstance();
+                    if (db != null) {
+                        // 只保存一次消息
+                        db.saveMessage(fromJid, toJid, messageBody, false);
+                    }
+                    
+                    // 通知所有消息监听器
                     for (MessageListener listener : messageListeners) {
                         listener.onMessageReceived(from.toString(), messageBody);
                     }
